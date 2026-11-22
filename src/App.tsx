@@ -309,14 +309,7 @@ export const App: React.FC = () => {
           <span>Loading live graph topology from Neo4j AuraDB...</span>
         </div>
       )}
-      {!isLoading && isOfflineFallback && (
-        <div className="w-full bg-amber-950/90 border-b border-amber-500/60 px-4 py-1 text-xs text-amber-200 flex items-center justify-center gap-2 z-30">
-          <span className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-bold uppercase tracking-wider text-[10px]">
-            offline demo data
-          </span>
-          <span>Backend unreachable — falling back to local mockTopology.ts</span>
-        </div>
-      )}
+      
 
       {/* 1. Top KPI & Regulatory Impact Bar */}
       <TopKpiBar
