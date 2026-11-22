@@ -1,0 +1,3 @@
+id,label,type,tier,mfa,department,identitySubType,zone,criticality,pii_data,pii_records,compromised,assetSubType,ip,os,cve_id,cvss,exploitable,description
+contractor-ext,contractor-ext,Identity,3,false,External Vendor - UI QA,Contractor,,,,,true,,,,,,,
+JumpHost-Corp,JumpHost-Corp,Asset,,,,,Corp,8,false,,true,Server,10.24.0.15,Ubuntu 22.04 LTS,,,,

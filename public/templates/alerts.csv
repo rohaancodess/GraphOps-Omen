@@ -1,0 +1,3 @@
+id,timestamp,severity,title,sourceHost,targetHost,mitreTactic,mitreId,rawLog,isBreachNarrative,narrativeStep
+ALR-9001,16:12:04,HIGH,Anomalous OAuth Token Replay from Unrecognized ASN,contractor-ext,Dev-Laptop-04,Initial Access,T1190,AUTH_WARN: user=contractor-ext src_ip=185.220.101.44 dst=Dev-Laptop-04 mfa=false token_replay=true,true,1
+ALR-9009,15:40:12,LOW,Outbound Port Scan Blocked on DMZ Perimeter Interface,Bastion-DMZ-01,VPN-Gateway-DMZ,Reconnaissance,T1595,"FW_DROP: src=172.16.0.40 dst=172.16.0.10 ports=21,23,3389 action=DROP",,

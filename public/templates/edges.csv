@@ -1,0 +1,3 @@
+id,source,target,relationship,port,last_used_days,is_standing_privilege,timestamp,auth_type,mitre_tactic,bytes,process,is_attack_edge,attack_step_order
+edge-blast-3,JumpHost-Corp,Analytics-Jupyter-VM,CAN_ACCESS,8888,110,true,,,,,,,
+edge-ent-1,alice.dev,Dev-Laptop-04,AUTHENTICATED_TO,,,,2026-10-28T09:15:00Z,WebAuthn Passkey,Normal Login,,,,

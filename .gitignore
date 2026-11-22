@@ -6,3 +6,8 @@ dist-ssr
 *.log
 .DS_Store
 Thumbs.db
+.env
+MIGRATION_NOTES.md
+CSV_IMPORT_NOTES.md
+scripts/out/
+server/node_modules

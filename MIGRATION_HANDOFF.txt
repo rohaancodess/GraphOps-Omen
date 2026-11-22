@@ -1,0 +1,162 @@
+================================================================================
+GRAPHOPS OMEN MIGRATION — COMPREHENSIVE AI HANDOFF & STATUS DOCUMENT
+================================================================================
+Generated: 2026-11-22
+Project: GraphOps Omen (SOC Workbench)
+Project Root: c:\Users\anura\OneDrive\Desktop\AI workflow\GraphOps-Omen--main\
+
+1. EXECUTIVE SUMMARY & COMPLETION LEVEL
+--------------------------------------------------------------------------------
+Migration Progress: 100% of planned migration tasks (T0 through T8) COMPLETED.
+Build Status:
+  - Frontend (Vite + React + Tailwind): PASS (npm run build -> built in 1.5s, 0 errors)
+  - Frontend TypeScript Typecheck: PASS (npx tsc --noEmit -> 0 errors)
+  - Backend TypeScript Typecheck: PASS (cd server && npx tsc --noEmit -> 0 errors)
+  - Neo4j AuraDB Health: PASS (HTTP 200 { ok: true })
+  - Database Baseline Parity: PASS (Exact 1:1 match across all graph algorithms)
+
+--------------------------------------------------------------------------------
+2. COMPLETED TASKS BREAKDOWN (T0 - T8)
+--------------------------------------------------------------------------------
+[PASS] Task 0 (Setup):
+  - Created MIGRATION_NOTES.md as the persistent single-source-of-truth.
+  - Documented verified facts, known bugs, and constraints.
+
+[PASS] Task 1 (Headless Baseline Verification):
+  - Created scripts/baseline.mts to run graph analytics headlessly.
+  - Baseline metrics locked:
+      * 44 nodes: 14 Identity, 20 Asset, 10 Vulnerability
+      * 55 edges: 28 CAN_ACCESS, 9 CONNECTED_TO, 8 AUTHENTICATED_TO, 10 HAS_VULN
+      * 25 alerts: 8 breach narrative, 17 noise
+      * Blast radius from JumpHost-Corp (3 hops): hop1=5, hop2=8, hop3=5
+      * 77 attack paths (threshold 8, 'ANY')
+      * Top choke node: JumpHost-Corp (score 0.99)
+      * Top choke edge: edge-attack-2-static (score 0.57)
+      * Merged Incident: INC-2026-001, CRITICAL severity, 1.2M at risk
+      * CERT-In / DPDP 2-hop regulatory alert: TRIGGERED (true)
+      * Total PII records exposed: 3,758,500
+
+[PASS] Task 2 (Environment & Security Isolation):
+  - Updated .gitignore to exclude .env and server/node_modules.
+  - Created .env.example with placeholders.
+  - Created .env with active Neo4j AuraDB instance credentials.
+
+[PASS] Task 3 (Express Backend Server):
+  - Created server/ package and Express server on port 3001.
+  - Configured shared Neo4j driver with session binding to process.env.NEO4J_DATABASE.
+  - Endpoint GET /api/health executes `RETURN 1` and returns { ok: true } with sanitized errors.
+  - Added npm scripts to root package.json: "server" and "dev:all" (using concurrently).
+  - Added Vite reverse proxy in vite.config.ts for `/api` targeting http://localhost:3001.
+
+[PASS] Task 4 (Neo4j Seeding & Idempotency):
+  - Created server/seed.ts reading src/data/mockTopology.ts.
+  - Created uniqueness constraints on `id` property for labels: Identity, Asset, Vulnerability, Alert.
+  - All properties mapped as primitives (no flattening needed).
+  - Executed UNWIND + MERGE per relationship type (CAN_ACCESS, AUTHENTICATED_TO, CONNECTED_TO, HAS_VULN).
+  - Added POST /api/seed and POST /api/reset endpoints.
+  - Verified idempotency: running seed twice maintains exactly 44 nodes, 55 relationships, 25 alerts.
+
+[PASS] Task 5 (Read Endpoint & Baseline Parity):
+  - Endpoint GET /api/topology returns exact { nodes, edges, rawAlerts } format.
+  - Converted Neo4j Integer types to native JavaScript numbers.
+  - Executed all 5 graph analytics algorithms against data fetched directly from Neo4j.
+  - Exact match verified against baseline:
+      * Blast hops: 5, 8, 5
+      * Attack paths: 77
+      * Top choke node: JumpHost-Corp (0.99)
+      * Top choke edge: edge-attack-2-static (0.57)
+      * Correlated incident: INC-2026-001 (CRITICAL)
+      * DPDP triggered: true
+
+[PASS] Task 6 (Frontend Integration & Offline Fallback):
+  - Created src/api/topologyClient.ts with 5-second abort controller timeout and payload shape validation.
+  - Updated src/App.tsx to load topology dynamically on mount.
+  - Added loading spinner state while fetching from Neo4j.
+  - Added automatic fallback to INITIAL_TOPOLOGY with an "offline demo data" indicator badge if backend is unavailable.
+  - Connected loaded rawAlerts to mergeAlerts and KPI components.
+
+[PASS] Task 7 (Write Endpoints & Local Fallback):
+  - Implemented parameterized Cypher write endpoints:
+      * POST /api/edges/:id/sever
+      * POST /api/nodes/:id/contain
+      * POST /api/revoke-dormant
+  - Updated App.tsx handlers (remediate choke point, contain node, sever edge, revoke dormant) to call backend API.
+  - Implemented graceful local fallback: on API error or offline mode, state updates locally and "(local only)" is appended to the audit log.
+
+[PASS] Task 8 (Security Hardening & Password Audit):
+  - Hardened CORS in server/index.ts to FRONTEND_ORIGIN.
+  - Enforced 1MB request body limit on express.json.
+  - Scanned all project files outside .env, .git, and node_modules for database password leaks: 0 found (CLEAN).
+  - Verified .env is git-ignored.
+  - Updated MIGRATION_NOTES.md with full changelog and status.
+
+--------------------------------------------------------------------------------
+3. ARCHITECTURE & DATA FLOW
+--------------------------------------------------------------------------------
+Browser (React + Cytoscape.js)
+    │
+    │  (HTTP /api/...)
+    ▼
+Vite Dev Proxy (port 5173) ──> Express Backend (port 3001)
+                                      │
+                                      │  (neo4j+s:// protocol)
+                                      ▼
+                                Neo4j AuraDB (Cloud)
+
+Division of Responsibilities:
+- Neo4j AuraDB: Persistent storage of graph topology (nodes, edges, alerts) and graph mutations.
+- Express (server/): REST API, query parameterization, Neo4j session management, driver lifecycle.
+- Browser Frontend:
+    * All 5 core security algorithms run in the browser via useMemo (BFS blast radius, Dijkstra attack paths, Betweenness Centrality choke points, WCC alert clustering, DPDP 2-hop check).
+    * Cytoscape.js graph rendering and GSAP animations.
+    * Real-time UI inspection and SOAR audit log.
+
+--------------------------------------------------------------------------------
+4. HOW TO RUN THE APPLICATION
+--------------------------------------------------------------------------------
+To run the full stack concurrently (Backend + Frontend):
+  $ cd "c:\Users\anura\OneDrive\Desktop\AI workflow\GraphOps-Omen--main"
+  $ npm run dev:all
+
+Endpoints:
+  - Frontend: http://localhost:5173
+  - Backend API: http://localhost:3001
+  - Health check: http://localhost:3001/api/health
+  - Topology endpoint: http://localhost:3001/api/topology
+
+Individual Run Commands:
+  - Frontend only: npm run dev
+  - Backend only: npm run server
+  - Build check: npm run build
+  - Frontend Typecheck: npx tsc --noEmit
+  - Server Typecheck: cd server && npx tsc --noEmit
+
+--------------------------------------------------------------------------------
+5. KEY FILES DIRECTORY
+--------------------------------------------------------------------------------
+- .env                      Root environment variables (URI, USER, PASS, DB, ORIGIN)
+- .gitignore                Excludes secrets and node_modules
+- package.json              Root package configuration, dev:all and server scripts
+- vite.config.ts            Vite configuration with /api proxy to localhost:3001
+- server/index.ts           Express API server with Neo4j driver and endpoints
+- server/seed.ts            Database seed and reset functions with constraints
+- server/package.json       Server dependencies (express, cors, dotenv, neo4j-driver)
+- server/tsconfig.json      Server TypeScript configuration
+- src/App.tsx               Main workbench application (loading, fallback, API handlers)
+- src/api/topologyClient.ts Frontend HTTP client for topology with timeout and shape check
+- src/data/mockTopology.ts  Static topology data (used for seeding and offline fallback)
+- src/utils/graphAlgorithms.ts The 5 client-side graph analytics algorithms (UNCHANGED)
+- MIGRATION_NOTES.md        Persistent record of requirements, progress, and verification
+
+--------------------------------------------------------------------------------
+6. KNOWN BUGS / PRESERVED BEHAVIORS (DO NOT ALTER)
+--------------------------------------------------------------------------------
+Per the migration specification, the following existing quirks were intentionally preserved:
+1. Top banner text "1.2M" is hardcoded in UI components.
+2. Containment logic approximation: "fewer than 4 active attack edges".
+3. Twin edges in mock data: edge-attack-2-static and edge-attack-2-dynamic.
+4. Top-edge choke list display is not sorted by score.
+5. Union-find result in mergeAlerts is calculated but not consumed by downstream UI.
+
+================================================================================
+EOF
