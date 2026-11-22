@@ -120,3 +120,60 @@ export async function importCsvApi(
   );
   return response.json();
 }
+
+export interface AiIncidentBriefPayload {
+  language: 'en' | 'hi';
+  graphSummary: {
+    totalNodes: number;
+    totalEdges: number;
+    compromisedNodes: string[];
+    topChokeNode?: {
+      nodeId: string;
+      centralityScore: number;
+      pathsIntercepted: number;
+      crownJewelsProtected: string[];
+    } | null;
+    topChokeEdge?: {
+      edgeId: string;
+      source: string;
+      target: string;
+      relationship: string;
+      centralityScore: number;
+      pathsIntercepted: number;
+    } | null;
+    attackPathsCount: number;
+    simAttackPathsAfterChoke: number;
+    simAttackPathsAfterZeroTrust: number;
+    dormantEdgesCount: number;
+    dpdpTriggered: boolean;
+    simDpdpAfterChoke: boolean;
+    piiRecordsAtRisk: number;
+    triggeringNode?: string | null;
+    shortestBreachHops?: number | null;
+  };
+}
+
+export interface AiIncidentBriefResponse {
+  ok: boolean;
+  model: string;
+  brief: string;
+  reasoning?: string;
+}
+
+export async function generateAiIncidentBriefApi(
+  payload: AiIncidentBriefPayload
+): Promise<AiIncidentBriefResponse> {
+  const response = await fetchWithTimeout(
+    '/api/ai/incident-brief',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+    25000
+  );
+  return response.json();
+}

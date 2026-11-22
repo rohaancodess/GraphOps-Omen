@@ -28,6 +28,7 @@ import { RightInspectorDrawer } from './components/RightInspectorDrawer';
 import { BottomAlertTray } from './components/BottomAlertTray';
 import { CsvImportButton } from './components/CsvImportButton';
 import { CsvImportDialog } from './components/CsvImportDialog';
+import { AiCopilotModal } from './components/AiCopilotModal';
 
 export const App: React.FC = () => {
   const [nodes, setNodes] = useState<GraphNode[]>(() =>
@@ -409,6 +410,16 @@ export const App: React.FC = () => {
         }}
       />
 
+      <AiCopilotModal
+        nodes={nodes}
+        edges={edges}
+        chokePoints={chokePoints}
+        shortestPaths={shortestPaths}
+        dpdpAlert={dpdpAlert}
+        onRemediateChokePoint={handleRemediateChokePoint}
+        onContainNode={handleContainNode}
+        onRevokeDormantPrivileges={handleRevokeDormantPrivileges}
+      />
       <CsvImportButton onClick={() => setIsCsvImportOpen(true)} />
       <CsvImportDialog
         isOpen={isCsvImportOpen}

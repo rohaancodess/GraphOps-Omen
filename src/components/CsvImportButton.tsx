@@ -11,7 +11,7 @@ export const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onClick }) => 
       type="button"
       onClick={onClick}
       title="Import Nodes, Edges, or SIEM Alerts from CSV files into Neo4j"
-      className="absolute bottom-3 right-48 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-[#0a0a0c] text-[#fff318] border-2 border-[#fff318] hover:bg-[#fff318] hover:text-[#0a0a0c] shadow-lg transition cursor-pointer"
+      className="absolute bottom-16 right-4 z-[46] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-[#0a0a0c] text-[#fff318] border-2 border-[#fff318] hover:bg-[#fff318] hover:text-[#0a0a0c] shadow-lg transition cursor-pointer"
     >
       <Upload className="w-3.5 h-3.5" />
       <span>Import CSV</span>

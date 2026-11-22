@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ShieldAlert,
   Route,
@@ -14,6 +14,8 @@ import {
   AttackPathResult,
   BlastRadiusResult,
   ChokePointAnalysis,
+  evaluateDpdpRegulatoryAlert,
+  findShortestAttackPaths,
 } from '../utils/graphAlgorithms';
 import { WorkbenchMode } from './GraphCanvas';
 import { MAX_BLAST_HOPS } from '../utils/hopStyle';
@@ -58,6 +60,57 @@ export const LeftControlPanel: React.FC<LeftControlPanelProps> = ({
   const selectableNodes = nodes.filter((n) => n.type !== 'Vulnerability');
   const dormantEdges = edges.filter((e) => (e.last_used_days ?? 0) > 90);
   const topEdge = chokePoints.topEdges[0];
+
+  // Counterfactual "What-If" Simulation: Preview impact of severing #1 Choke Edge
+  const chokeWhatIf = useMemo(() => {
+    if (!topEdge) return null;
+    const simGraph = {
+      nodes,
+      edges: edges.filter((e) => e.id !== topEdge.edgeId),
+    };
+    const simPaths = findShortestAttackPaths(simGraph, 'ANY', 8);
+    const curDpdp = evaluateDpdpRegulatoryAlert({ nodes, edges });
+    const simDpdp = evaluateDpdpRegulatoryAlert(simGraph);
+    const reductionPct =
+      shortestPaths.length > 0
+        ? Math.round(
+            ((shortestPaths.length - simPaths.length) / shortestPaths.length) *
+              100
+          )
+        : 0;
+    return {
+      beforePaths: shortestPaths.length,
+      afterPaths: simPaths.length,
+      reductionPct,
+      beforePiiRisk: curDpdp.totalRecordsAtRisk,
+      afterPiiRisk: simDpdp.totalRecordsAtRisk,
+      dpdpContained: !simDpdp.triggered,
+    };
+  }, [nodes, edges, topEdge, shortestPaths.length]);
+
+  // Counterfactual "What-If" Simulation: Preview impact of revoking all >90d dormant privileges
+  const zeroTrustWhatIf = useMemo(() => {
+    if (dormantEdges.length === 0) return null;
+    const simGraph = {
+      nodes,
+      edges: edges.filter((e) => (e.last_used_days ?? 0) <= 90),
+    };
+    const simPaths = findShortestAttackPaths(simGraph, 'ANY', 8);
+    const simDpdp = evaluateDpdpRegulatoryAlert(simGraph);
+    const reductionPct =
+      shortestPaths.length > 0
+        ? Math.round(
+            ((shortestPaths.length - simPaths.length) / shortestPaths.length) *
+              100
+          )
+        : 0;
+    return {
+      beforePaths: shortestPaths.length,
+      afterPaths: simPaths.length,
+      reductionPct,
+      dpdpContained: !simDpdp.triggered,
+    };
+  }, [nodes, edges, dormantEdges.length, shortestPaths.length]);
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -286,6 +339,35 @@ export const LeftControlPanel: React.FC<LeftControlPanelProps> = ({
                     </div>
                   </div>
 
+                  {chokeWhatIf && (
+                    <div className="bg-zinc-950/90 border border-emerald-500/40 rounded-lg p-2 space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
+                        <span>⚡ What-If Simulation Preview</span>
+                        <span>-{chokeWhatIf.reductionPct}% Paths</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] font-mono">
+                        <span className="text-zinc-400">Dijkstra Paths:</span>
+                        <span>
+                          <span className="text-red-400">{chokeWhatIf.beforePaths}</span>
+                          {' → '}
+                          <span className="text-emerald-400 font-bold">{chokeWhatIf.afterPaths}</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] font-mono">
+                        <span className="text-zinc-400">2-Hop PII Risk:</span>
+                        <span>
+                          <span className="text-red-400">
+                            {(chokeWhatIf.beforePiiRisk / 1000000).toFixed(2)}M
+                          </span>
+                          {' → '}
+                          <span className="text-emerald-400 font-bold">
+                            {(chokeWhatIf.afterPiiRisk / 1000000).toFixed(2)}M
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => onRemediateChokePoint(topEdge.edgeId)}
                     title="Sever the highest-path-frequency bridge edge to break lateral paths to Crown Jewels."
@@ -390,6 +472,28 @@ export const LeftControlPanel: React.FC<LeftControlPanelProps> = ({
                 </span>
                 <span className="font-mono font-bold text-[#fff318]">{dormantEdges.length} Active</span>
               </div>
+              {zeroTrustWhatIf && (
+                <div className="bg-zinc-950 border border-emerald-500/40 rounded-lg p-2 space-y-1 mb-2">
+                  <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
+                    <span>⚡ What-If Purge Impact</span>
+                    <span>-{zeroTrustWhatIf.reductionPct}% Paths</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-zinc-400">Attack Paths:</span>
+                    <span>
+                      <span className="text-red-400">{zeroTrustWhatIf.beforePaths}</span>
+                      {' → '}
+                      <span className="text-emerald-400 font-bold">{zeroTrustWhatIf.afterPaths}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-zinc-400">DPDP 2-Hop Alert:</span>
+                    <span className="text-emerald-400 font-bold">
+                      {zeroTrustWhatIf.dpdpContained ? 'CONTAINED' : 'ACTIVE'}
+                    </span>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={onRevokeDormantPrivileges}
                 disabled={dormantEdges.length === 0}

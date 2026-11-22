@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import neo4j, { Driver, Integer } from 'neo4j-driver';
 import { seedGraph, resetGraph } from './seed.js';
 import { createExportHandler, createImportHandler } from './csvImportExport.js';
+import { createAiIncidentBriefHandler } from './aiCopilot.js';
 
 // Load .env from project root reliably
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -221,6 +222,9 @@ app.post('/api/revoke-dormant', async (_req, res) => {
 // ── POST /api/import & GET /api/export ──
 app.post('/api/import', createImportHandler(driver, DB));
 app.get('/api/export', createExportHandler(driver, DB));
+
+// ── POST /api/ai/incident-brief (Sarvam GLM-5.3 Flash SOC Copilot) ──
+app.post('/api/ai/incident-brief', createAiIncidentBriefHandler());
 
 app.listen(PORT, () => {
   console.log(`GraphOps server listening on http://localhost:${PORT}`);
